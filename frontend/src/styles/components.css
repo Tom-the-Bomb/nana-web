@@ -1,0 +1,21 @@
+@import "tailwindcss";
+
+.txt-input, .basic-btn {
+    @apply border border-slate-300 rounded-sm p-2;
+}
+
+.basic-btn:hover {
+    @apply bg-slate-100;
+}
+
+.basic-btn:disabled {
+    @apply bg-slate-200 text-gray-400;
+}
+
+.txt-input:active, .txt-input:focus, .basic-btn:active, .basic-btn:focus {
+    @apply outline-2 outline-slate-300;
+}
+
+.error {
+    @apply text-sm text-red-500;
+}

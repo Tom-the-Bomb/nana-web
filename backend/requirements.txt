@@ -1,0 +1,8 @@
+flask
+flask-cors
+pymongo[srv]
+bcrypt
+boto3
+boto3-stubs[s3]
+PyJWT
+parsedatetime
