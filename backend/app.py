@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections import defaultdict
+import traceback
 from typing import TYPE_CHECKING, Callable, TypedDict
 from functools import wraps
 from os import environ
@@ -84,10 +85,8 @@ def _auth_required(handler: Callable[[User], Response]) -> Callable[..., Respons
                 return make_response(({'message': 'Token has expired'}, 401))
             except jwt.InvalidTokenError:
                 return make_response(({'message': 'Invalid token'}, 401))
-            except Exception as e:
-                raise e
-                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
-                return make_response(({'message': str(e)}, 500))
+            except Exception:
+                return make_response(({'message': traceback.format_exc()}, 500))
         else:
             return make_response(({'message': 'Authorization header missing'}, 401))
     return wrapper
@@ -113,7 +112,7 @@ def login() -> tuple[dict[str, str], int]:
                 'user': data['username']
             }, 200
         else:
-            return {'message': 'Invalid credentials'}, 401
+            return {'message': 'Incorrect Password'}, 401
     else:
         return {'message': 'User not found'}, 404
 
@@ -124,7 +123,7 @@ def register() -> Response:
     hashed_pw = hashpw(data['password'].encode('utf-8'), gensalt()).decode('utf-8')
 
     if collection.find_one({'username': data['username']}):
-        return make_response(({'message': 'Username already exists'}, 409))
+        return make_response(({'message': 'Username is taken'}, 409))
     else:
         collection.insert_one({
             'username': data['username'],

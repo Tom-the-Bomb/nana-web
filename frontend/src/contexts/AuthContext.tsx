@@ -19,7 +19,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = localStorage.getItem('user');
 
         if (token && userData) {
-            console.log("AuthProvider: Found token and user data in localStorage.", { token, userData });
             setUser(JSON.parse(userData));
         }
 
@@ -39,22 +38,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             }),
         });
 
-        if (response.ok) {
-            const data = await response.json();
+        const data = await response.json();
 
+        if (response.ok) {
             localStorage.setItem('token', data.token);
             localStorage.setItem('user', JSON.stringify(data.user));
             setUser(data.user);
 
             return null;
         } else {
-            return response.status === 404
-                ? "User not found"
-                : response.status === 401
-                    ? "Incorrect password"
-                    : response.status === 409
-                        ? "Username already taken"
-                        : "An error occurred";
+            return data.message;
         }
     }
 

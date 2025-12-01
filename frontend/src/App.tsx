@@ -8,8 +8,6 @@ import logo from './assets/logo.svg';
 export default function App() {
     const { isAuthenticated, isLoading, logout } = useAuth();
 
-    console.log("App rendered. isAuthenticated:", isAuthenticated, "isLoading:", isLoading);
-
     return (
         <div className="flex flex-col max-w-dvw min-h-dvh">
             <header className="flex justify-between p-3 font-bold text-xl">
