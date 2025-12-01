@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import TYPE_CHECKING, Callable, TypedDict
 from functools import wraps
 from os import environ
@@ -52,7 +53,7 @@ r2_client = boto3.client('s3', endpoint_url=environ['R2_ENDPOINT'])
 R2_BUCKET = environ['R2_BUCKET']
 JWT_SECRET = environ['JWT_SECRET']
 
-current_patient_id = None
+current_tests = defaultdict(dict)
 
 def _generate_jwt(username: str) -> str:
     """Generate a JWT token for the given username with 24 hours expiration."""
@@ -74,7 +75,7 @@ def _auth_required(handler: Callable[[User], Response]) -> Callable[..., Respons
 
             try:
                 payload = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
-                print(payload)
+
                 if user := collection.find_one({'username': payload['username']}):
                     return handler(user)
                 else:
@@ -84,6 +85,8 @@ def _auth_required(handler: Callable[[User], Response]) -> Callable[..., Respons
             except jwt.InvalidTokenError:
                 return make_response(({'message': 'Invalid token'}, 401))
             except Exception as e:
+                raise e
+                print("AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA")
                 return make_response(({'message': str(e)}, 500))
         else:
             return make_response(({'message': 'Authorization header missing'}, 401))
@@ -134,21 +137,20 @@ def register() -> Response:
             'user': data['username']
         }, 201))
 
-@app.route('/test', methods=['POST', 'DELETE'])
+@app.route('/test', methods=['POST'])
 @cross_origin()
-def start_test() -> Response:
-    if request.method == 'POST':
-        data: dict[str, str] = request.get_json()
-        global current_patient_id
+@_auth_required
+def start_test(user: User) -> Response:
+    user_tests = current_tests[user['username']]
 
-        if current_patient_id:
-            return make_response(({'message': 'A test is already in progress'}, 400))
+    data: dict[str, str] = request.get_json()
+    device = data['device_id']
 
-        current_patient_id = data['patient_id']
-        return make_response(({'message': f'Process started with data', 'data': data}, 200))
-    else:
-        current_patient_id = None
-        return make_response(({'message': 'Test session terminated'}, 200))
+    if user_tests[device]:
+        return make_response(({'message': 'A test is already in progress'}, 400))
+
+    user_tests[device] = data['patient_id']
+    return make_response(({'message': f'Process started with data', 'data': data}, 200))
 
 @app.route('/upload', methods=['POST'])
 @cross_origin()
@@ -157,19 +159,22 @@ def upload(user: User) -> Response:
     data = request.form.to_dict()
     video = request.files.get('video')
 
-    if current_patient_id:
+    user_tests = current_tests[username := user['username']]
+    device = data['device_id']
+
+    if current_patient_id := user_tests.get(device):
         if patient := collection.find_one({
-            'username': user['username'],
+            'username': username,
             'patients.patient_id': current_patient_id
         }):
             r2_client.upload_fileobj(
                 video.stream,
                 R2_BUCKET,
-                f'{user["username"]}/{current_patient_id}/{len(patient["tests"]) + 1}.mp4'
+                f'{username}/{current_patient_id}/{len(patient["tests"]) + 1}.mp4'
             )
             collection.update_one(
                 {
-                    'username': user['username'],
+                    'username': username,
                     'patients.patient_id': current_patient_id
                 },
                 {
@@ -185,6 +190,7 @@ def upload(user: User) -> Response:
         else:
             return make_response(({'message': 'Patient not found'}, 404))
     else:
+        del user_tests[device]
         return make_response(({'message': 'No test in progress'}, 400))
 
 @app.route('/patients', methods=['GET', 'POST'])

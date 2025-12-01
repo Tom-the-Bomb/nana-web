@@ -28,8 +28,8 @@ with open("tests/test.mp4", "rb") as f:
     x = requests.post('http://localhost:5000/login', json={"username": "BOB", "password": "123"})
     token = x.json()['token']
 
-    x = requests.post('http://localhost:5000/start', headers={"Authorization": f'Bearer {token}'})
-    print(x.status_code)
+    x = requests.post('http://localhost:5000/test', json={'device_id': '1', 'patient_id': '123'},headers={"Authorization": f'Bearer {token}'})
+    print(x.text)
 
     r = requests.post('http://localhost:5000/upload', files=file, json=data, headers={"Authorization": f'Bearer {token}'})
 

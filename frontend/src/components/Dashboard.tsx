@@ -1,16 +1,30 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Patient } from './Patient';
 
 export default function Dashboard() {
+    const [isLoading, setIsLoading] = useState(true);
     const [patients, setPatients] = useState<any[]>([]);
 
-    fetch(`${import.meta.env.VITE_API_URL}/patients`, {
-        headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`
-        }
-    })
-        .then((res) => res.json())
-        .then((data) => setPatients(data.patients));
+    useEffect(() => {
+        fetch(`${import.meta.env.VITE_API_URL}/patients`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('token')}`
+            }
+        })
+            .then((res) => {
+                if (res.status === 401) {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('user');
+                    window.location.reload();
+                }
+                return res.json();
+            })
+            .then((data) => {
+                setPatients(data.patients);
+                setIsLoading(false);
+            });
+    }, []);
 
     const patientSearchRef = useRef<HTMLInputElement>(null);
     const patientFailedRef = useRef<HTMLInputElement>(null);
@@ -105,21 +119,23 @@ export default function Dashboard() {
                     <input ref={patientLastTestedRef} type="checkbox" id="last-tested" onChange={patientSearch} /> Sort by last tested
                 </label>
             </div>
-            <ul ref={patientsRef} className="flex flex-col gap-5 w-2/3 border border-slate-300 rounded-md p-5">
+            <ul ref={patientsRef} className="flex flex-col gap-5 w-2/3 round-box p-5">
                 {
-                    patients.map((patient) => (
-                        <Patient
-                            key={patient.patiend_id}
-                            patient={patient}
-                            dataName={patient.name}
-                            dataId={patient.patient_id}
-                        />
-                    ))
+                    isLoading
+                        ? <li>Loading...</li>
+                        : patients.map((patient) => (
+                            <Patient
+                                key={patient.patient_id}
+                                patient={patient}
+                                dataName={patient.name}
+                                dataId={patient.patient_id}
+                            />
+                        ))
                 }
             </ul>
             <div className="flex flex-col gap-3 justify-center items-center">
                 <span className="text-sm text-slate-500">Total Patients: {patients.length}</span>
-                <form onSubmit={addPatient} className="flex flex-col gap-2 border border-slate-300 rounded-md p-5">
+                <form onSubmit={addPatient} className="flex flex-col gap-2 round-box p-5">
                     <input
                         ref={patientNameRef}
                         className="txt-input"

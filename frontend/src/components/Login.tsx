@@ -29,8 +29,8 @@ export default function Login() {
 
     return (
         <div className="flex flex-col grow gap-14 justify-center items-center">
-            <h1 className="text-4xl font-bold">Welcome To NANA Web</h1>
-            <div className="p-6 gap-4 flex flex-col rounded-md border border-slate-300">
+            <h1 className="text-4xl font-bold text-center">Welcome To NANA Web</h1>
+            <div className="p-6 gap-4 flex flex-col round-box">
                 <h1>Enter Your Credentials</h1>
                 <div className="flex flex-col gap-2">
                     <input

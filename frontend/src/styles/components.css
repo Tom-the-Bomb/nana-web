@@ -8,7 +8,7 @@
     @apply bg-slate-100;
 }
 
-.basic-btn:disabled {
+.basic-btn:disabled, .txt-input:disabled {
     @apply bg-slate-200 text-gray-400;
 }
 
@@ -18,4 +18,8 @@
 
 .error {
     @apply text-sm text-red-500;
+}
+
+.round-box {
+    @apply border border-slate-300 rounded-md;
 }

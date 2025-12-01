@@ -19,6 +19,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const userData = localStorage.getItem('user');
 
         if (token && userData) {
+            console.log("AuthProvider: Found token and user data in localStorage.", { token, userData });
             setUser(JSON.parse(userData));
         }
 
